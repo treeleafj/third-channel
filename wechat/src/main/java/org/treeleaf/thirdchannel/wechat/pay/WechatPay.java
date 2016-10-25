@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.treeleaf.common.bean.FastBeanUtils;
 import org.treeleaf.common.http.HttpHeader;
-import org.treeleaf.common.http.basic.Post;
+import org.treeleaf.common.http.httpclient.Post;
 import org.treeleaf.common.safe.Maths;
 import org.treeleaf.common.safe.Uuid;
 import org.treeleaf.thirdchannel.wechat.pay.entity.JsapiParam;

@@ -2,8 +2,8 @@ package org.treeleaf.thirdchannel.wechat.js;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.treeleaf.common.http.basic.Get;
-import org.treeleaf.common.http.basic.Post;
+import org.treeleaf.common.http.httpclient.Get;
+import org.treeleaf.common.http.httpclient.Post;
 import org.treeleaf.common.json.Jsoner;
 import org.treeleaf.common.safe.Sha;
 import org.treeleaf.common.safe.Uuid;
@@ -46,7 +46,6 @@ public class Jssdk {
                 .param("grant_type", "client_credential")
                 .param("appid", appid)
                 .param("secret", secret)
-                .retry()
                 .send();
 
         log.info("调用微信获取accessToken接口,返回:{}", s);
@@ -102,7 +101,6 @@ public class Jssdk {
                 .param("access_token", access_token)
                 .param("openid", openid)
                 .param("lang", "zh_CN")
-                .retry()
                 .send();
 
         log.info("调用微信获取已授权用户基本信息接口,返回:{}", result);
@@ -121,7 +119,6 @@ public class Jssdk {
                 .param("access_token", access_token)
                 .param("openid", openid)
                 .param("lang", "zh_CN")
-                .retry()
                 .send();
         log.info("调用微信获取已关注用户信息接口,返回:{}", s);
         return Jsoner.toObj(s, UserInfo.class);
@@ -148,7 +145,6 @@ public class Jssdk {
 
         String s = new Post("https://api.weixin.qq.com/cgi-bin/user/info/batchget?access_token=" + access_token)
                 .body(Jsoner.toJson(data))
-                .retry()
                 .send();
         log.info("调用微信批量获取已关注用户信息接口,返回:{}", s);
         return Jsoner.toObj(s, UserInfos.class);
