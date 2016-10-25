@@ -5,17 +5,18 @@
     <modelVersion>4.0.0</modelVersion>
 
     <properties>
+        <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
     <packaging>pom</packaging>
     <modules>
-        <module>treeleaf-wechat</module>
+        <module>wechat</module>
     </modules>
 
-    <groupId>org.treeleaf.third-channel</groupId>
+    <groupId>com.github.treeleafj</groupId>
     <artifactId>third-channel</artifactId>
-    <version>1.0.0.SNAPSHOT</version>
+    <version>1.2.0.SNAPSHOT</version>
 
 
     <dependencies>
@@ -27,19 +28,13 @@
             <scope>provided</scope>
         </dependency>
 
-        <!--log4j1.x -->
-        <!--<dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>1.7.7</version>
-        </dependency>-->
-
         <!--log4j2.x -->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-slf4j-impl</artifactId>
             <version>2.3</version>
         </dependency>
+
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
