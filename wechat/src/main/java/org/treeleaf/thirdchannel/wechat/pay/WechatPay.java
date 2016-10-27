@@ -10,6 +10,10 @@ import org.treeleaf.common.safe.Maths;
 import org.treeleaf.common.safe.Uuid;
 import org.treeleaf.thirdchannel.wechat.pay.entity.JsapiParam;
 import org.treeleaf.thirdchannel.wechat.pay.entity.Notice;
+import org.treeleaf.thirdchannel.wechat.pay.entity.OrderQuery;
+import org.treeleaf.thirdchannel.wechat.pay.entity.OrderQueryResult;
+import org.treeleaf.thirdchannel.wechat.pay.entity.OrderRefund;
+import org.treeleaf.thirdchannel.wechat.pay.entity.RefundResult;
 import org.treeleaf.thirdchannel.wechat.pay.entity.UnifiedOrder;
 import org.treeleaf.thirdchannel.wechat.pay.entity.UnifiedOrderResult;
 
@@ -47,6 +51,12 @@ public class WechatPay extends WechatMerchantInterface {
      * 商户密钥
      */
     private String key;
+
+    /**
+     * CA证书位置
+     */
+    private String certPath;
+
 
     /**
      * 微信统一下单
@@ -165,6 +175,119 @@ public class WechatPay extends WechatMerchantInterface {
         return jsapiParam;
     }
 
+    /**
+     * 微信退款, orderNo,wxOrderNo二者只需要传一个,如果两个都传,以微信订单号为准
+     *
+     * @param orderNo   伤害订单号
+     * @param wxOrderNo 微信订单号
+     * @return
+     */
+    public OrderQueryResult queryPayOrder(String orderNo, String... wxOrderNo) {
+        OrderQuery orderQuery = new OrderQuery();
+        orderQuery.setAppid(this.appid);
+        orderQuery.setMch_id(this.merchantNo);
+        orderQuery.setNonce_str(Uuid.buildBase64UUID());
+        orderQuery.setOut_trade_no(orderNo);
+        orderQuery.setTransaction_id(wxOrderNo != null && wxOrderNo.length > 0 ? wxOrderNo[0] : null);
+
+        //2.签名
+        String sign = WechatPaySignature.sign(orderQuery, this.key);
+        orderQuery.setSign(sign);
+
+        Map<String, String> orderReq;
+        try {
+            orderReq = FastBeanUtils.describe(orderQuery);
+            orderReq.remove("class");
+        } catch (Exception e) {
+            throw new RuntimeException("将java对象转为Map失败", e);
+        }
+
+        //3.转xml
+        String xml = this.mapToXml(orderReq);
+
+        log.debug("生成微信订单查询接口参数:\n{}", xml);
+
+        //4.发送
+        String r = new Post("https://api.mch.weixin.qq.com/pay/orderquery")
+                .header(HttpHeader.NAME_CONTENT_TYPE, HttpHeader.CONTENT_TYPE_XML)
+                .body(xml).send();
+
+        log.debug("调用微信订单查询接口成功,返回:\n{}", r);
+
+        //5.将从API返回的XML数据映射到Java对象
+        Map returnMap = this.xmlToMap(r);
+
+        //6.验签
+        String returnSign = (String) returnMap.get("sign");
+        OrderQueryResult orderQueryResult = FastBeanUtils.fastPopulate(OrderQueryResult.class, returnMap);
+        if ("SUCCESS".equals(orderQueryResult.getReturn_code()) && "SUCCESS".equals(orderQueryResult.getResult_code())) {
+            returnMap.remove("sign");
+            String s = WechatPaySignature.sign(returnMap, this.key);
+            if (StringUtils.isBlank(returnSign) || !s.equals(returnSign)) {
+                throw new WechatPayException("微信订单查询返回数据验签失败:" + returnSign + "," + s);
+            }
+        }
+
+        return orderQueryResult;
+    }
+
+    public RefundResult refund(OrderRefund orderRefund) {
+        orderRefund.setAppid(this.appid);
+        orderRefund.setMch_id(this.merchantNo);
+        orderRefund.setNonce_str(Uuid.buildBase64UUID());
+//        外面可以选择设置下面三个
+//        orderRefund.setTransaction_id();
+//        orderRefund.setOut_trade_no();
+//        orderRefund.setTotal_fee();
+//        orderRefund.setRefund_fee();
+        orderRefund.setRefund_fee_type("CNY");
+        if (StringUtils.isBlank(orderRefund.getOp_user_id())) {
+            orderRefund.setOp_user_id(this.merchantNo);
+        }
+
+        //2.签名
+        String sign = WechatPaySignature.sign(orderRefund, this.key);
+        orderRefund.setSign(sign);
+
+        Map<String, String> orderReq;
+        try {
+            orderReq = FastBeanUtils.describe(orderRefund);
+            orderReq.remove("class");
+        } catch (Exception e) {
+            throw new RuntimeException("将java对象转为Map失败", e);
+        }
+
+        //3.转xml
+        String xml = this.mapToXml(orderReq);
+
+        log.debug("生成微信退款接口参数:\n{}", xml);
+
+        //4.发送
+        String r = new WXCertPost("https://api.mch.weixin.qq.com/secapi/pay/refund")
+                .certPath(this.certPath)
+                .password(this.merchantNo)
+                .header(HttpHeader.NAME_CONTENT_TYPE, HttpHeader.CONTENT_TYPE_XML)
+                .body(xml).send();
+
+        log.debug("调用微信退款接口成功,返回:\n{}", r);
+
+        //5.将从API返回的XML数据映射到Java对象
+        Map returnMap = this.xmlToMap(r);
+
+        //6.验签
+        String returnSign = (String) returnMap.get("sign");
+        RefundResult orderQueryResult = FastBeanUtils.fastPopulate(RefundResult.class, returnMap);
+        if ("SUCCESS".equals(orderQueryResult.getReturn_code()) && "SUCCESS".equals(orderQueryResult.getResult_code())) {
+            returnMap.remove("sign");
+            String s = WechatPaySignature.sign(returnMap, this.key);
+            if (StringUtils.isBlank(returnSign) || !s.equals(returnSign)) {
+                throw new WechatPayException("微信退款返回数据验签失败:" + returnSign + "," + s);
+            }
+        }
+
+        return orderQueryResult;
+    }
+
     public void setAppid(String appid) {
         this.appid = appid;
     }
@@ -177,4 +300,8 @@ public class WechatPay extends WechatMerchantInterface {
         this.key = key;
     }
 
+    public WechatPay setCertPath(String certPath) {
+        this.certPath = certPath;
+        return this;
+    }
 }
