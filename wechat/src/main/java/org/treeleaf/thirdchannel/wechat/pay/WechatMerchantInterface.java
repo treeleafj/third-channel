@@ -7,10 +7,13 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.XMLWriter;
+import org.omg.CORBA.PRIVATE_MEMBER;
+import org.treeleaf.common.safe.Sha;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +22,28 @@ import java.util.Map;
  * Created by leaf on 2016/3/17 0017.
  */
 public abstract class WechatMerchantInterface {
+
+    /**
+     * 对微信事件推送验签
+     *
+     * @param signature
+     * @param timestamp
+     * @param nonce
+     * @param token
+     * @return
+     */
+    public static boolean valid(String signature, String timestamp, String nonce, String token) {
+        String[] array = new String[] { token, timestamp, nonce };
+        Arrays.sort(array);
+        StringBuffer sb = new StringBuffer();
+        for (String s : array) {
+            sb.append(s);
+        }
+
+        String src = sb.toString();
+        String s = Sha.bytes2Hex(Sha.sha1(src));
+        return s.equals(signature);
+    }
 
     /**
      * 将map对象转为微信需要的xml格式
