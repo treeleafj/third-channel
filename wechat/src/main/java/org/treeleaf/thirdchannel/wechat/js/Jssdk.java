@@ -9,13 +9,19 @@ import org.treeleaf.common.safe.Sha;
 import org.treeleaf.common.safe.Uuid;
 import org.treeleaf.thirdchannel.wechat.js.entity.AccessToken;
 import org.treeleaf.thirdchannel.wechat.js.entity.AuthAccessToken;
+import org.treeleaf.thirdchannel.wechat.js.entity.QrCode;
 import org.treeleaf.thirdchannel.wechat.js.entity.SendTemplateResult;
 import org.treeleaf.thirdchannel.wechat.js.entity.SnsUserInfo;
 import org.treeleaf.thirdchannel.wechat.js.entity.Ticket;
 import org.treeleaf.thirdchannel.wechat.js.entity.UserInfo;
 import org.treeleaf.thirdchannel.wechat.js.entity.UserInfos;
 
-import java.util.*;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Formatter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 微信js sdk接口调用封装
@@ -176,6 +182,48 @@ public class Jssdk {
         log.info("调用微信发送模版消息接口,返回:{}", result);
 
         return Jsoner.toObj(result, SendTemplateResult.class);
+    }
+
+    /**
+     * 创建带参数的临时二维码
+     *
+     * @param access_token 微信accessToken
+     * @param scene_id     自行设定的参数
+     * @param expireSecond 过期时间(秒)
+     */
+    public QrCode createTempQrCode(String access_token, int scene_id, int expireSecond) {
+        String address = "https://api.weixin.qq.com/cgi-bin/qrcode/create?access_token=" + access_token;
+        //调用过期的
+        String body = "{\"expire_seconds\": " + expireSecond + ", \"action_name\": \"QR_SCENE\", \"action_info\": {\"scene\": {\"scene_id\": " + scene_id + "}}}";
+        String r = new Post(address).body(body).send();
+        log.info("调用微信生成带参数的临时二维码接口,返回:{}", r);
+        return Jsoner.toObj(r, QrCode.class);
+    }
+
+    /**
+     * 创建带参数的永久二维码
+     *
+     * @param access_token 微信accessToken
+     * @param scene_str    自行设定的参数
+     */
+    public QrCode createPermanentQrCode(String access_token, String scene_str) {
+        String address = "https://api.weixin.qq.com/cgi-bin/qrcode/create?access_token=" + access_token;
+        //调用永久的
+        String body = "{\"action_name\": \"QR_LIMIT_SCENE\", \"action_info\": {\"scene\": {\"scene_str\": " + scene_str + "}}}";
+        String r = new Post(address).body(body).send();
+        log.info("调用微信生成带参数的永久二维码接口,返回:{}", r);
+        return Jsoner.toObj(r, QrCode.class);
+    }
+
+    /**
+     * 根据创建二维码接口返回的ticket生成二维码图片
+     *
+     * @param ticket 创建二维码接口返回的ticket
+     * @param out    输出流
+     */
+    public void createQrCodeImage(String ticket, OutputStream out) {
+        String address = "https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=" + ticket;
+        new Post(address).send(out);
     }
 
     /**
