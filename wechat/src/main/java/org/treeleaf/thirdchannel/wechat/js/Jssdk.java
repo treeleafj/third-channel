@@ -204,16 +204,32 @@ public class Jssdk {
      * 创建带参数的永久二维码
      *
      * @param access_token 微信accessToken
+     * @param scene_id     自行设定的参数
+     */
+    public QrCode createPermanentQrCode(String access_token, int scene_id) {
+        String address = "https://api.weixin.qq.com/cgi-bin/qrcode/create?access_token=" + access_token;
+        //调用永久的
+        String body = "{\"action_name\": \"QR_LIMIT_SCENE\", \"action_info\": {\"scene\": {\"scene_id\": " + scene_id + "}}}";
+        String r = new Post(address).body(body).send();
+        log.info("调用微信生成带参数的永久二维码接口,返回:{}", r);
+        return Jsoner.toObj(r, QrCode.class);
+    }
+
+    /**
+     * 创建带参数的永久二维码
+     *
+     * @param access_token 微信accessToken
      * @param scene_str    自行设定的参数
      */
     public QrCode createPermanentQrCode(String access_token, String scene_str) {
         String address = "https://api.weixin.qq.com/cgi-bin/qrcode/create?access_token=" + access_token;
         //调用永久的
-        String body = "{\"action_name\": \"QR_LIMIT_SCENE\", \"action_info\": {\"scene\": {\"scene_str\": " + scene_str + "}}}";
+        String body = "{\"action_name\": \"QR_LIMIT_STR_SCENE\", \"action_info\": {\"scene\": {\"scene_str\": \"" + scene_str + "\"}}}";
         String r = new Post(address).body(body).send();
         log.info("调用微信生成带参数的永久二维码接口,返回:{}", r);
         return Jsoner.toObj(r, QrCode.class);
     }
+
 
     /**
      * 根据创建二维码接口返回的ticket生成二维码图片
@@ -311,5 +327,4 @@ public class Jssdk {
     public String getOauth2Url() {
         return "https://open.weixin.qq.com/connect/oauth2/authorize";
     }
-
 }
