@@ -7,14 +7,7 @@ import org.treeleaf.common.http.httpclient.Post;
 import org.treeleaf.common.json.Jsoner;
 import org.treeleaf.common.safe.Sha;
 import org.treeleaf.common.safe.Uuid;
-import org.treeleaf.thirdchannel.wechat.js.entity.AccessToken;
-import org.treeleaf.thirdchannel.wechat.js.entity.AuthAccessToken;
-import org.treeleaf.thirdchannel.wechat.js.entity.QrCode;
-import org.treeleaf.thirdchannel.wechat.js.entity.SendTemplateResult;
-import org.treeleaf.thirdchannel.wechat.js.entity.SnsUserInfo;
-import org.treeleaf.thirdchannel.wechat.js.entity.Ticket;
-import org.treeleaf.thirdchannel.wechat.js.entity.UserInfo;
-import org.treeleaf.thirdchannel.wechat.js.entity.UserInfos;
+import org.treeleaf.thirdchannel.wechat.js.entity.*;
 
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -230,7 +223,6 @@ public class Jssdk {
         return Jsoner.toObj(r, QrCode.class);
     }
 
-
     /**
      * 根据创建二维码接口返回的ticket生成二维码图片
      *
@@ -240,6 +232,20 @@ public class Jssdk {
     public void createQrCodeImage(String ticket, OutputStream out) {
         String address = "https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=" + ticket;
         new Post(address).send(out);
+    }
+
+    /**
+     * 创建自定义惨淡
+     *
+     * @param access_token
+     * @param menuJson
+     * @return
+     */
+    public MenuResult createMenu(String access_token, String menuJson) {
+        String addr = "https://api.weixin.qq.com/cgi-bin/menu/create?access_token=" + access_token;
+        String r = new Post(addr).body(menuJson).send();
+        log.info("调用微信生成自定义菜单接口,返回:{}", r);
+        return Jsoner.toObj(r, MenuResult.class);
     }
 
     /**
