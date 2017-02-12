@@ -33,7 +33,20 @@ public abstract class WechatMerchantInterface {
      * @return
      */
     public static boolean valid(String signature, String timestamp, String nonce, String token) {
-        String[] array = new String[] { token, timestamp, nonce };
+        String s = sign(timestamp, nonce, token);
+        return s.equals(signature);
+    }
+
+    /**
+     * 微信事件通知签名
+     *
+     * @param timestamp 时间戳
+     * @param nonce     返回的随机数
+     * @param token     校验token
+     * @return
+     */
+    public static String sign(String timestamp, String nonce, String token) {
+        String[] array = new String[]{token, timestamp, nonce};
         Arrays.sort(array);
         StringBuffer sb = new StringBuffer();
         for (String s : array) {
@@ -41,8 +54,7 @@ public abstract class WechatMerchantInterface {
         }
 
         String src = sb.toString();
-        String s = Sha.bytes2Hex(Sha.sha1(src));
-        return s.equals(signature);
+        return Sha.bytes2Hex(Sha.sha1(src));
     }
 
     /**
