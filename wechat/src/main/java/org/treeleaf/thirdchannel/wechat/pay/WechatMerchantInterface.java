@@ -7,7 +7,6 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.XMLWriter;
-import org.omg.CORBA.PRIVATE_MEMBER;
 import org.treeleaf.common.safe.Sha;
 
 import java.io.ByteArrayOutputStream;
